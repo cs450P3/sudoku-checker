@@ -49,20 +49,32 @@ typedef struct
 	int high_bound;
 } Range;
 // https://stackoverflow.com/questions/20712572/how-to-ignore-whitespaces-in-fscanf
-int sudoku_grid[] = {
-	7, 2, 6,    3, 5, 9,    4, 1, 8,
-	4, 5, 8,    1, 6, 7,    2, 3, 9,
-	9, 1, 3,    8, 2, 4,    7, 6, 5,
+// setup as 2d array
+int sudoku_grid[9][9] = {
+	{	7, 2, 6,    3, 5, 9,    4, 1, 8	},
+	{	4, 5, 8,    1, 6, 7,    2, 3, 9	},
+	{	9, 1, 3,    8, 2, 4,    7, 6, 5	},
 
-	1, 6, 2,    9, 7, 5,    3, 8, 4,
-	3, 9, 4,    2, 8, 6,    1, 5, 7,
-	8, 7, 5,    4, 1, 3,    9, 2, 6,
+	{	1, 6, 2,    9, 7, 5,    3, 8, 4	},
+	{	3, 9, 4,    2, 8, 6,    1, 5, 7	},
+	{	8, 7, 5,    4, 1, 3,    9, 2, 6	},
 
-	5, 3, 7,    6, 4, 1,    8, 9, 2,
-	6, 8, 9,    7, 3, 2,    5, 4, 1,
-	2, 4, 1,    5, 9, 8,    6, 7, 3
+	{	5, 3, 7,    6, 4, 1,    8, 9, 2	},
+	{	6, 8, 9,    7, 3, 2,    5, 4, 1	},
+	{	2, 4, 1,    5, 9, 8,    6, 7, 3	}
 };
-enum quadrants_rows_cols{top_left, top_middle, top_right, middle_left, middle_middle, middle_right, bottom_left, bottom_middle, bottom_right, row_, col_, subgrid_};
+// added row_, col_, subgrid_ to prevent enum conflict
+enum quadrants_rows_cols{top_left,
+						top_middle,
+						top_right,
+						middle_left,
+						middle_middle, middle_right,
+						bottom_left,
+						bottom_middle,
+						bottom_right,
+						row_,
+						col_,
+						subgrid_};
 
 char* getQuadrantName(int quadrant)
 {
@@ -160,22 +172,39 @@ char* getArrayKind(int array_kind)
 
 typedef struct {
 
-}info_to_pass_to_child_thread;
+	bool __rows;
+	bool __columns;
+	bool __subgrids;
+	int** _subgrids;
+	int** _cols;
+	int** _rows;
+	// each threads reads a subgrid, col, or row
+	// each thread writes to rows, columns, subtrids
+	// loop through each subgrid and map the ith subgrid to the ith subgrid checking function
+
+} InfoToPassToChildThread;
 
 bool check(int* row_col_or_sub_grid, int array_kind, int array_number, int* sudoku_check_grid)
 {
+	// lock.aquire()
 	// array_kind is the kind of array: row array, col array, subgrid array
 	// array_number is the ith arrray from array_kind
+	// putting 1-9 into 0-8 slots
 	bool values_to_check[] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 	for(int i = 0; i < 9; i++)
 	{
 
 		int index = row_col_or_sub_grid[i];
 		//printf("value = %i\n", row_col_or_sub_grid[i]);
-		if(!values_to_check[ sudoku_check_grid[index] ])
+
+		if(!values_to_check[ index - 1 ])
 		{
-			values_to_check[sudoku_check_grid[index]] = 1;
+			//printf("add value = %i\n", row_col_or_sub_grid[i]);
+
+			values_to_check[ index - 1 ] = 1;
 		}
+
+
 		else
 		{
 			// items has been seen already, so this array_number of array_kind is invalid
@@ -184,18 +213,28 @@ bool check(int* row_col_or_sub_grid, int array_kind, int array_number, int* sudo
 			{
 				printf("array kind: %s array number %i is invalid\n", getArrayKind(array_kind), array_number);
 				// free after printing
+				// lock.release()
 				return false;
 			}
 			else
 			{
-				printf("%s is invalid\n", getQuadrantName(array_number));
+				printf("%s subgrid is invalid\n", getQuadrantName(array_number));
+				// lock.release()
 				return false;
 			}
 
 		}
 	}
+
+	// set a true or a false to the ith row in the bool slot of row_col_or_sub_grid
+	//printf("--------\n");
+	// lock.release()
 	return true;
 }
+//int** subgrids
+//int** cols
+//int** rows
+//struct
 int main()
 {
 	// subgrid horizontal direction
@@ -234,12 +273,17 @@ int main()
 	ranges[1] = three_five;
 	ranges[2] = six_eight;
 
-	int offset = 27;
-	int multiplier = 1;
-	int scale = 0;
+	//int offset = 27;
+	//int multiplier = 1;
+	//int scale = 0;
 	int** subgrids = malloc(sizeof(int*) * 9);
 
 	int ith_subgrid = 0;
+	/*
+		for range_i in ranges
+			for range_j in ranges
+				ij
+	*/
 	for(int x = 0; x < 3; x++)
 	{
 		// make an array of scale values
@@ -251,23 +295,27 @@ int main()
 
 			int count = 0;
 
-			scale = x * 27; // 0 3 times 27 3 times 54 3 times
+			//scale = x * 27; // 0 3 times 27 3 times 54 3 times
 			// needs to start
-			for(int k = ranges[i]->low_bound; k < ranges[i]->high_bound; k++)
+			//printf("start\n");
+			for(int k = ranges[x]->low_bound; k < ranges[x]->high_bound; k++)
 			{
 
 				for(int l = ranges[i]->low_bound; l < ranges[i]->high_bound; l++)
 				{
-					subgrid[count] = l + scale;
+					subgrid[count] = sudoku_grid[k][l];//l + scale;
+					//printf("%i\n", sudoku_grid[k][l]);
 					//printf("%i count = %i\n", l+scale, count);
 					count++;
 
 				}
-				//printf("\n");
-				scale += 9;
-			}
-			subgrids[ith_subgrid] = subgrid;
 
+				//printf("\n");
+				//scale += 9;
+			}
+
+			subgrids[ith_subgrid] = subgrid;
+			//printf("end\n");
 			ith_subgrid++;
 			//printf("end of subgrid %i\n", i+x);
 			//scale += 27;
@@ -275,27 +323,12 @@ int main()
 		}
 		//printf("end of subgrid row %i-------\n", x+1);
 	}
+
 	for(int i  = 0; i < 3; i++)
 	{
 		free(ranges[i]);
 	}
 	free(ranges);
-	for(int i = 0; i < 9;i++)
-	{
-		for(int j = 0; j < 9; j++)
-		{
-			if(j % 3 == 0)
-			{
-				//printf("\n");
-			}
-			//printf("%i\n", subgrids[i][j]);
-
-		}
-		//printf("end of subgrid %i\n", i);
-	}
-
-	// make another loop
-	//exit(1);
 
 	int** cols = malloc(sizeof(int*) * 9);
 
@@ -305,57 +338,40 @@ int main()
 		int* col = malloc(sizeof(int) * 9);
 		for(int j = 0; j < 9; j++)
 		{
-			col[j] = i + (j * 9);
+			if(j % 3 == 0)
+			{
+				//printf("\n");
+			}
+			//printf("%i\n", sudoku_grid[j][i]);
+			col[j] = sudoku_grid[j][i];
+			//col[j] = i + (j * 9);
 			//printf("%i\n", i + (j * 9));
 		}
 		cols[i] = col;
-		//printf("\n");
+		//printf("---------\n");
 	}
 
-	for(int i = 0; i < 9; i++)
-	{
-		for(int j = 0; j < 9; j++)
-		{
-			//printf("%i\n", cols[i][j]);
-		}
-		//printf("\n");
-	}
-	//printf("\n----------\n");
-
-	// 0, 9, 18, 27 36 45 54 63 72
-	// 1, 10, 19, 28 37 46 55 64 73
-	// .
-	//	.
-	//	.
-	//	.
-	// 8 17 26 62 44 53 62 71 80
 	int** rows = malloc(sizeof(int*) * 9);
 	//printf("rows\n");
-	for(int j = 0; j < 9; j++)
+	for(int i = 0; i < 9; i++)
 	{
 		int* row = malloc(sizeof(int) * 9);
-		for(int i = 0; i < 9; i++)
+		for(int j = 0; j < 9; j++)
 		{
-
-			row[i] = i + (j * 9);
+			if(j % 3 == 0)
+			{
+				//printf("\n");
+			}
+			//printf("%i\n", sudoku_grid[i][j]);
+			row[j] = sudoku_grid[i][j];
+			//row[i] = i + (j * 9);
 			//printf("%i\n", i + (j * 9));
 		}
-		rows[j] = row;
-		//printf("\n");
+		rows[i] = row;
+		//printf("--------\n");
 	}
 
-	for(int j = 0; j < 9; j++)
-	{
-		int* row = malloc(sizeof(int) * 9);
-		for(int i = 0; i < 9; i++)
-		{
-
-			//row[i] = i + (j * 9);
-			//printf("%i\n", rows[j][i]);
-		}
-		//rows[j] = row;
-		//printf("\n");
-	}
+	//exit(1);
 	int passes = 0;
 	printf("checking subgrids\n");
 	for(int i = 0; i < 9; i++)
@@ -397,6 +413,12 @@ int main()
 	{
 		printf("grid is valid\n");
 	}
+	/*
+	for all 81 points, make 1 modification that will ensure the grid is invalid
+		the grid should be invalid in 3 places for each change
+	if there is 1 round such that 3 mistakes are not caught
+		the index values for the rows, columns, subgrids were not calculated correctly
+	*/
 
 	return 0;
 }
