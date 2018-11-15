@@ -48,21 +48,7 @@ typedef struct
 	int low_bound;
 	int high_bound;
 } Range;
-// https://stackoverflow.com/questions/20712572/how-to-ignore-whitespaces-in-fscanf
-// setup as 2d array
-int sudoku_grid[9][9] = {
-	{	7, 2, 6,    3, 5, 9,    4, 1, 8	},
-	{	4, 5, 8,    1, 6, 7,    2, 3, 9	},
-	{	9, 1, 3,    8, 2, 4,    7, 6, 5	},
 
-	{	1, 6, 2,    9, 7, 5,    3, 8, 4	},
-	{	3, 9, 4,    2, 8, 6,    1, 5, 7	},
-	{	8, 7, 5,    4, 1, 3,    9, 2, 6	},
-
-	{	5, 3, 7,    6, 4, 1,    8, 9, 2	},
-	{	6, 8, 9,    7, 3, 2,    5, 4, 1	},
-	{	2, 4, 1,    5, 9, 8,    6, 7, 3	}
-};
 // added row_, col_, subgrid_ to prevent enum conflict
 enum quadrants_rows_cols{top_left,
 						top_middle,
@@ -170,21 +156,8 @@ char* getArrayKind(int array_kind)
 	return array_kind_name;
 }
 
-typedef struct {
 
-	bool __rows;
-	bool __columns;
-	bool __subgrids;
-	int** _subgrids;
-	int** _cols;
-	int** _rows;
-	// each threads reads a subgrid, col, or row
-	// each thread writes to rows, columns, subtrids
-	// loop through each subgrid and map the ith subgrid to the ith subgrid checking function
-
-} InfoToPassToChildThread;
-
-bool check(int* row_col_or_sub_grid, int array_kind, int array_number, int* sudoku_check_grid)
+bool check(int* row_col_or_sub_grid, int array_kind, int array_number)
 {
 	// lock.aquire()
 	// array_kind is the kind of array: row array, col array, subgrid array
@@ -231,11 +204,22 @@ bool check(int* row_col_or_sub_grid, int array_kind, int array_number, int* sudo
 	// lock.release()
 	return true;
 }
-//int** subgrids
-//int** cols
-//int** rows
-//struct
-int main()
+
+typedef struct {
+
+	bool* __rows;
+	bool* __columns;
+	bool* __subgrids;
+	int** _subgrids;
+	int** _cols;
+	int** _rows;
+	// each threads reads a subgrid, col, or row
+	// each thread writes to rows, columns, subtrids
+	// loop through each subgrid and map the ith subgrid to the ith subgrid checking function
+
+} InfoToPassToChildThread;
+
+int main(int argc, char** argv)
 {
 	// subgrid horizontal direction
 	// 0 1 2, 9 10 11 18 19 20
@@ -253,8 +237,27 @@ int main()
 	/*
 	zip cols
 	*/
-	int* sudoku_check_grid = malloc(sizeof(int) * 81);
-	memcpy(sudoku_check_grid, sudoku_grid, sizeof(int) * 81);
+	int** grid = malloc(sizeof(int*) * 9);
+	FILE* file_ptr;
+	if((file_ptr = fopen(argv[1], "r")) == NULL)
+	{
+		printf("can't find file\n");
+		exit(1);
+	}
+	for(int j = 0; j < 9; j++)
+	{
+		int* row_of_grid = malloc(sizeof(int) * 9);
+
+		for(int i = 0; i < 9; i++)
+		{
+			fscanf(file_ptr, "%i", &row_of_grid[i]);
+			//printf("%i\n", row_of_grid[i]);
+		}
+		//printf("------\n");
+		grid[j] = row_of_grid;
+	}
+
+
 
 	Range* zero_two = malloc(sizeof(Range));
 	Range* three_five = malloc(sizeof(Range));
@@ -303,7 +306,7 @@ int main()
 
 				for(int l = ranges[i]->low_bound; l < ranges[i]->high_bound; l++)
 				{
-					subgrid[count] = sudoku_grid[k][l];//l + scale;
+					subgrid[count] = grid[k][l];//l + scale;
 					//printf("%i\n", sudoku_grid[k][l]);
 					//printf("%i count = %i\n", l+scale, count);
 					count++;
@@ -343,7 +346,7 @@ int main()
 				//printf("\n");
 			}
 			//printf("%i\n", sudoku_grid[j][i]);
-			col[j] = sudoku_grid[j][i];
+			col[j] = grid[j][i];
 			//col[j] = i + (j * 9);
 			//printf("%i\n", i + (j * 9));
 		}
@@ -363,7 +366,7 @@ int main()
 				//printf("\n");
 			}
 			//printf("%i\n", sudoku_grid[i][j]);
-			row[j] = sudoku_grid[i][j];
+			row[j] = grid[i][j];
 			//row[i] = i + (j * 9);
 			//printf("%i\n", i + (j * 9));
 		}
@@ -372,11 +375,16 @@ int main()
 	}
 
 	//exit(1);
+	InfoToPassToChildThread* master_struct = malloc(sizeof(InfoToPassToChildThread));
+	master_struct->_rows = malloc(sizeof(int) * 9);
+	//master_struct->_columns = malloc(sizeof(int) * 9);
+	//master_struct->_subgrids = malloc(sizeof(int) * 9);
+
 	int passes = 0;
 	printf("checking subgrids\n");
 	for(int i = 0; i < 9; i++)
 	{
-		bool pass = check(subgrids[i], subgrid_, i, sudoku_check_grid);
+		bool pass = check(subgrids[i], subgrid_, i);
 		if(pass)
 		{
 			//printf("%i\n", pass);
@@ -389,7 +397,7 @@ int main()
 	for(int i = 0; i < 9; i++)
 	{
 
-		bool pass = check(rows[i], row_, i, sudoku_check_grid);
+		bool pass = check(rows[i], row_, i);
 		if(pass)
 		{
 			//printf("%i\n", pass);
@@ -401,7 +409,7 @@ int main()
 	printf("\nchecking columns\n");
 	for(int i = 0; i < 9; i++)
 	{
-		bool pass = check(cols[i], col_, i, sudoku_check_grid);
+		bool pass = check(cols[i], col_, i);
 		if(pass)
 		{
 			//printf("%i\n", pass);
