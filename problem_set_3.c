@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
+#include <pthread.h>
 
 /*
 
@@ -172,69 +173,106 @@ char* getArrayKind(int array_kind)
 
 typedef struct {
 
+	/*
 	bool __rows;
 	bool __columns;
 	bool __subgrids;
 	int** _subgrids;
 	int** _cols;
+		*/
 	int** _rows;
+	int * row_col_or_sub_grid;
+	int array_kind;
+	int array_number;
+	int * sudoku_check_grid;
 	// each threads reads a subgrid, col, or row
-	// each thread writes to rows, columns, subtrids
+	// each thread writes to rows, columns, subgrids
 	// loop through each subgrid and map the ith subgrid to the ith subgrid checking function
 
 } InfoToPassToChildThread;
 
-bool check(int* row_col_or_sub_grid, int array_kind, int array_number, int* sudoku_check_grid)
+
+void* check(//int* row_col_or_sub_grid, int array_kind, int array_number, int* sudoku_check_grid
+			//InfoToPassToChildThread * master_struct
+			void * arg
+			)
 {
 	// lock.aquire()
 	// array_kind is the kind of array: row array, col array, subgrid array
 	// array_number is the ith arrray from array_kind
 	// putting 1-9 into 0-8 slots
+
+	InfoToPassToChildThread * master_struct = arg;
+	printf("Creating the master_struct\n" );
+
+	bool result = malloc(sizeof(bool));
 	bool values_to_check[] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 	for(int i = 0; i < 9; i++)
 	{
 
-		int index = row_col_or_sub_grid[i];
+		//int index = master_struct->_rows[master_struct->array_number][i];
+
+		for(int j = 0 ; j < 9; j++)
+		{
+			for(int k = 0; k < 9; k ++)
+
+				printf("%i ", master_struct->_rows[j][k]);
+			printf("------\n");
+		}
+		printf("%i\n", index);
+		printf("Working...1\n" );
 		//printf("value = %i\n", row_col_or_sub_grid[i]);
 
-		if(!values_to_check[ index - 1 ])
+		/*if(!values_to_check[ index - 1 ])
 		{
 			//printf("add value = %i\n", row_col_or_sub_grid[i]);
-
 			values_to_check[ index - 1 ] = 1;
+			printf("Working...2\n" );
 		}
-
 
 		else
 		{
 			// items has been seen already, so this array_number of array_kind is invalid
 
-			if(array_kind != subgrid_)
+			if(master_struct->array_kind != subgrid_)
 			{
-				printf("array kind: %s array number %i is invalid\n", getArrayKind(array_kind), array_number);
+				printf("array kind: %s array number %i is invalid\n", getArrayKind(master_struct->array_kind),
+				 master_struct->array_number);
 				// free after printing
 				// lock.release()
-				return false;
+				//return false;
+				result = false;
+				pthread_exit((void*)result);
 			}
 			else
 			{
-				printf("%s subgrid is invalid\n", getQuadrantName(array_number));
+				printf("%s subgrid is invalid\n", getQuadrantName(master_struct->array_number));
 				// lock.release()
-				return false;
+				//return false;
+				result = false;
+				pthread_exit((void*)result);
+
 			}
 
-		}
+		}*/
 	}
+	printf("Finished!!");
 
 	// set a true or a false to the ith row in the bool slot of row_col_or_sub_grid
 	//printf("--------\n");
 	// lock.release()
-	return true;
+	//return true;
+	result = true;
+	pthread_exit((void*)result);
+
 }
 //int** subgrids
 //int** cols
 //int** rows
 //struct
+
+
+
 int main()
 {
 	// subgrid horizontal direction
@@ -253,6 +291,13 @@ int main()
 	/*
 	zip cols
 	*/
+	/*
+	InfoToPassToChildThread* master_struct = malloc(sizeof(InfoToPassToChildThread));
+	master_struct->_rows = malloc(9);
+	*/
+
+
+
 	int* sudoku_check_grid = malloc(sizeof(int) * 81);
 	memcpy(sudoku_check_grid, sudoku_grid, sizeof(int) * 81);
 
@@ -350,8 +395,11 @@ int main()
 		cols[i] = col;
 		//printf("---------\n");
 	}
+	
+	InfoToPassToChildThread* master_struct = malloc(sizeof(InfoToPassToChildThread));
 
-	int** rows = malloc(sizeof(int*) * 9);
+	master_struct->_rows = malloc(sizeof(int*) * 9);
+	//memset(master_struct->_rows, 0, sizeof(int*) * 9);
 	//printf("rows\n");
 	for(int i = 0; i < 9; i++)
 	{
@@ -367,28 +415,63 @@ int main()
 			//row[i] = i + (j * 9);
 			//printf("%i\n", i + (j * 9));
 		}
-		rows[i] = row;
+		master_struct->_rows[i] = row;
 		//printf("--------\n");
 	}
 
 	//exit(1);
+
+	master_struct->array_kind = subgrid_;
+
+	//master_struct->sudoku_check_grid = malloc(sizeof(sudoku_check_grid));
+	//memcpy(master_struct->sudoku_check_grid, sudoku_check_grid, sizeof(sudoku_check_grid));
+
+	//master_struct->_rows = malloc(9);
+
+
+	pthread_t subgrid_thread[9];
+	pthread_t row_thread;
+	pthread_t col_thread;
+
 	int passes = 0;
 	printf("checking subgrids\n");
+	/*
+	InfoToPassToChildThread* master_struct = malloc(sizeof(InfoToPassToChildThread));
+	master_struct->_rows = malloc(9);
+	*/
+			bool *result;
+
 	for(int i = 0; i < 9; i++)
 	{
-		bool pass = check(subgrids[i], subgrid_, i, sudoku_check_grid);
+		bool pass;
+		//printf("foo3\n");
+
+		//bool pass = check(subgrids[i], subgrid_, i, sudoku_check_grid);
+		//master_struct->row_col_or_sub_grid = malloc(sizeof(int)*9);
+		//printf("foo1\n");
+		//memcpy(master_struct->row_col_or_sub_grid, subgrids[i], sizeof(int)*9);
+		
+
+		master_struct->array_number = i;
+		//printf("foo2\n");
+		pthread_create(&subgrid_thread[i], NULL, &check, &master_struct);
+		printf("foo\n");
 		if(pass)
 		{
 			//printf("%i\n", pass);
 			passes++;
 
 		}
+		pthread_join(subgrid_thread[0],(void**)&result);
+		printf("%i\n", (int) *result);
 
 	}
+	
+	exit(1);
+	/*
 	printf("\nchecking rows\n");
 	for(int i = 0; i < 9; i++)
 	{
-
 		bool pass = check(rows[i], row_, i, sudoku_check_grid);
 		if(pass)
 		{
@@ -413,6 +496,7 @@ int main()
 	{
 		printf("grid is valid\n");
 	}
+	*/
 	/*
 	for all 81 points, make 1 modification that will ensure the grid is invalid
 		the grid should be invalid in 3 places for each change
