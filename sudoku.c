@@ -76,20 +76,20 @@ char* getQuadrantName(int quadrant)
 	}
 	return quadrant_name;
 }
-
+/*
 int sudoku_grid[9][9] = {
-	{	7, /*2*/4, 6,    3, 5, 9,    4, 1, 8	},
+	{	7, 24, 6,    3, 5, 9,    4, 1, 8	},
 	{	4, 5, 8,    1, 6, 7,    2, 3, 9	},
 	{	9, 1, 3,    8, 2, 4,    7, 6, 5	},
 
 	{	1, 6, 2,    9, 7, 5,    3, 8, 4	},
-	{	3, 9, 4,    2, /*8*/4, 6,    1, 5, 7	},
+	{	3, 9, 4,    2, 84, 6,    1, 5, 7	},
 	{	8, 7, 5,    4, 1, 3,    9, 2, 6	},
 
 	{	5, 3, 7,    6, 4, 1,    8, 9, 2	},
 	{	6, 8, 9,    7, 3, 2,    5, 4, 1	},
-	{	2, 4, 1,    5, 9, 8,    6, /*7*/4, 3	}
-};
+	{	2, 4, 1,    5, 9, 8,    6, 74, 3	}
+};*/
 
 /*
 int sudoku_grid[9][9] = {
@@ -106,123 +106,173 @@ int sudoku_grid[9][9] = {
 	{	2, 4, 1,    5, 9, 8,    6, 4, 3	}
 };
 */
-bool check_col(int sudoku_grid[9][9], int column){
+typedef struct
+{
+	int sudoku_grid[9][9];
+	int row_col;
+	int pass;
+
+} RowColStuct;
+
+void* check_col(void* stuff_from_pthread_create){
+
+	RowColStuct* cols = stuff_from_pthread_create;
+
 	int returner[9] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
 
 	bool result = malloc(sizeof(bool));
-
+	cols->pass = 1;
 	for(int i = 0; i < 9; i++){
-		if(1 == sudoku_grid[i][column]){
+		if(1 == cols->sudoku_grid[i][cols->row_col]){
 			returner[0] = 0;
 			continue;
 		}
-		if(2 == sudoku_grid[i][column]){
+		if(2 == cols->sudoku_grid[i][cols->row_col]){
 			returner[1] = 0;
 			continue;
 		}
-		if(3 == sudoku_grid[i][column]){
+		if(3 == cols->sudoku_grid[i][cols->row_col]){
 			returner[2] = 0;
 			continue;
 		}
-		if(4 == sudoku_grid[i][column]){
+		if(4 == cols->sudoku_grid[i][cols->row_col]){
 			returner[3] = 0;
 			continue;
 		}
-		if(5 == sudoku_grid[i][column]){
+		if(5 == cols->sudoku_grid[i][cols->row_col]){
 			returner[4] = 0;
 			continue;
 		}
-		if(6 == sudoku_grid[i][column]){
+		if(6 == cols->sudoku_grid[i][cols->row_col]){
 			returner[5] = 0;
 			continue;
 		}
-		if(7 == sudoku_grid[i][column]){
+		if(7 == cols->sudoku_grid[i][cols->row_col]){
 			returner[6] = 0;
 			continue;
 		}
-		if(8 == sudoku_grid[i][column]){
+		if(8 == cols->sudoku_grid[i][cols->row_col]){
 			returner[7] = 0;
 			continue;
 		}
-		if(9 == sudoku_grid[i][column]){
+		if(9 == cols->sudoku_grid[i][cols->row_col]){
 			returner[8] = 0;
 			continue;
 		}
 	}
+	/*
 	for (int i = 0; i < 9; ++i){
 		if(returner[i] != 0){
 			result = false;
 			return result;
 		}
 	}
-	result = true;
-	return true;
+	*/
+
+	for (int i = 0; i < 9; ++i)
+	{
+		if (returner[i] != 0){
+			//result = false;
+			cols->pass = 0;
+
+			//return result;
+		}
+	}
+
+	//result = true;
+	//return true;
+	pthread_exit(0);
 }
 
-bool check_row(int sudoku_grid[9][9], int row){
+void* check_row(void* stuff_from_pthread_create)
+{
+	RowColStuct* rows = stuff_from_pthread_create;
+	//int sudoku_grid[9][9], int row
 	int returner[9] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
 
 	bool result = malloc(sizeof(bool));
-
+	rows->pass = 1;
 	for (int i = 0; i < 9; ++i){
-		if(1 == sudoku_grid[row][i]){
+		if(1 == rows->sudoku_grid[rows->row_col][i]){
 			returner[0] = 0;
 			continue;
 		}
-		if(2 == sudoku_grid[row][i]){
+		if(2 == rows->sudoku_grid[rows->row_col][i]){
 			returner[1] = 0;
 			continue;
 		}
-		if(3 == sudoku_grid[row][i]){
+		if(3 == rows->sudoku_grid[rows->row_col][i]){
 			returner[2] = 0;
 			continue;
 		}
-		if(4 == sudoku_grid[row][i]){
+		if(4 == rows->sudoku_grid[rows->row_col][i]){
 			returner[3] = 0;
 			continue;
 		}
-		if(5 == sudoku_grid[row][i]){
+		if(5 == rows->sudoku_grid[rows->row_col][i]){
 			returner[4] = 0;
 			continue;
 		}
-		if(6 == sudoku_grid[row][i]){
+		if(6 == rows->sudoku_grid[rows->row_col][i]){
 			returner[5] = 0;
 			continue;
 		}
-		if(7 == sudoku_grid[row][i]){
+		if(7 == rows->sudoku_grid[rows->row_col][i]){
 			returner[6] = 0;
 			continue;
 		}
-		if(8 == sudoku_grid[row][i]){
+		if(8 == rows->sudoku_grid[rows->row_col][i]){
 			returner[7] = 0;
 			continue;
 		}
-		if(9 == sudoku_grid[row][i]){
+		if(9 == rows->sudoku_grid[rows->row_col][i]){
 			returner[8] = 0;
 			continue;
 		}
 	}
-	for (int i = 0; i < 9; ++i)
+	/*for (int i = 0; i < 9; ++i)
 	{
 		if (returner[i] != 0){
 			result = false;
 			return result;
 		}
+	}*/
+	for (int i = 0; i < 9; ++i)
+	{
+		if (returner[i] != 0){
+			//result = false;
+			rows->pass = 0;
+
+			//return result;
+		}
 	}
 
-	result = true;
-	return result;
+	/*
+	if(rows->pass)
+	{
+		//subgrids->pass = 1;
+		printf("True!\n");
+
+	}
+	else
+	{
+		printf("False!\n");
+	}*/
+	//result = true;
+	//return result;
+	pthread_exit(0);
+
 }
 typedef struct
-	{
-		int sudoku_grid[9][9];
-		int row_low_bound;
-		int row_high_bound;
-		int col_low_bound;
-		int col_high_bound;
-		int pass;
+{
+	int sudoku_grid[9][9];
+	int row_low_bound;
+	int row_high_bound;
+	int col_low_bound;
+	int col_high_bound;
+	int pass;
 
-	} GridStuct;
+} GridStuct;
 void* check_grid(void* stuff_from_pthread_create){
 
 
@@ -301,15 +351,8 @@ void* check_grid(void* stuff_from_pthread_create){
 }
 
 
-typedef struct
-{
-	int *sudoku_grid[9][9];
-	int row_col;
-	int pass;
 
-} RowColStuct;
-
-int main()
+int main(int argc, char** argv)
 {
 	/*
 	bool cols_result = check_col(sudoku_grid, 0);
@@ -335,12 +378,34 @@ int main()
 	printf("%d\n", rows_result);
 	printf("%d\n", grids_result);
 	*/
+
+	int** grid = malloc(sizeof(int*) * 9);
+	FILE* file_ptr;
+	if((file_ptr = fopen(argv[1], "r")) == NULL)
+	{
+		printf("can't find file\n");
+		exit(1);
+	}
+	for(int j = 0; j < 9; j++)
+	{
+		int* row_of_grid = malloc(sizeof(int) * 9);
+
+		for(int i = 0; i < 9; i++)
+		{
+			fscanf(file_ptr, "%i", &row_of_grid[i]);
+			//printf("%i\n", row_of_grid[i]);
+		}
+		//printf("------\n");
+		grid[j] = row_of_grid;
+	}
+	int row_passes = 0;
+	int col_passes = 0;
+	int subgrid_passes = 0;
 	pthread_t grid_threads[9];
-	pthread_t row_threads[9];
-	pthread_t col_threads[9];
 
 
 
+	/*
 	typedef struct
 	{
 		int *sudoku_grid[9][9];
@@ -348,7 +413,7 @@ int main()
 		int pass;
 
 	} RowColStuct;
-
+	*/
 
 	// Checking the grids
 	GridStuct* subgrids = malloc(sizeof(GridStuct) * 9);
@@ -368,7 +433,7 @@ int main()
 		{
 			for (int j = 0; j < 9; ++j)
 			{
-				subgrids[k].sudoku_grid[i][j] = sudoku_grid[i][j];
+				subgrids[k].sudoku_grid[i][j] = grid[i][j];
 			}
 		}
 		subgrids[k].row_low_bound = row_low_bounds[k];
@@ -377,7 +442,6 @@ int main()
 		subgrids[k].col_high_bound = col_high_bounds[k];
 		subgrids[k].pass = 0;
 	}
-
 
 
 
@@ -425,9 +489,89 @@ int main()
 		if(!subgrids[i].pass)
 		{
 			printf("%s is not valid\n", getQuadrantName(i));
+			//exit(0);
+		}
+		else
+		{
+			subgrid_passes++;
 		}
 		//printf("resuld is %d\n", subgrids[i].pass);
 
 	}
+	pthread_t row_threads[9];
+
+	RowColStuct* rows = malloc(sizeof(RowColStuct) * 9);
+	for(int k = 0; k < 9; k++)
+	{
+		for (int i = 0; i < 9; ++i)
+		{
+			for (int j = 0; j < 9; ++j)
+			{
+				rows[k].sudoku_grid[i][j] = grid[i][j];
+			}
+		}
+		rows[k].pass = 0;
+		rows[k].row_col = k;
+	}
+	for (int i = 0; i < 9; ++i)
+	{
+		pthread_create(&row_threads[i], NULL, &check_row, &rows[i]);
+	}
+	for(int i = 0; i < 9; i++)
+	{
+		pthread_join(row_threads[i], NULL);
+		if(!rows[i].pass)
+		{
+			printf("row %i is not valid\n", i);
+			//exit(0);
+		}
+		else
+		{
+			row_passes++;
+		}
+		//printf("resuld is %d\n", subgrids[i].pass);
+
+	}
+
+
+
+	pthread_t col_threads[9];
+	RowColStuct* cols = malloc(sizeof(RowColStuct) * 9);
+	for(int k = 0; k < 9; k++)
+	{
+		for (int i = 0; i < 9; ++i)
+		{
+			for (int j = 0; j < 9; ++j)
+			{
+				cols[k].sudoku_grid[i][j] = grid[i][j];
+			}
+		}
+		cols[k].pass = 0;
+		cols[k].row_col = k;
+	}
+	for (int i = 0; i < 9; ++i)
+	{
+		pthread_create(&col_threads[i], NULL, &check_col, &cols[i]);
+	}
+	for(int i = 0; i < 9; i++)
+	{
+		pthread_join(col_threads[i], NULL);
+		if(!cols[i].pass)
+		{
+			printf("column %i is not valid\n", i);
+			//exit(0);
+		}
+		else
+		{
+			col_passes++;
+		}
+		//printf("resuld is %d\n", subgrids[i].pass);
+
+	}
+	if(col_passes + row_passes + subgrid_passes == 27)
+	{
+		printf("sudoku grid is valid\n");
+	}
+
 	return 0;
 }
