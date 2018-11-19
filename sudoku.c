@@ -107,53 +107,13 @@ void* check_col(void* stuff_from_pthread_create)
 	cols->pass = 1;
 	for(int i = 0; i < 9; i++)
 	{
-		if(1 == cols->sudoku_grid[i][cols->row_col])
-		{
-			returner[0] = 0;
-			continue;
-		}
-		if(2 == cols->sudoku_grid[i][cols->row_col])
-		{
-			returner[1] = 0;
-			continue;
-		}
-		if(3 == cols->sudoku_grid[i][cols->row_col])
-		{
-			returner[2] = 0;
-			continue;
-		}
-		if(4 == cols->sudoku_grid[i][cols->row_col])
-		{
-			returner[3] = 0;
-			continue;
-		}
-		if(5 == cols->sudoku_grid[i][cols->row_col])
-		{
-			returner[4] = 0;
-			continue;
-		}
-		if(6 == cols->sudoku_grid[i][cols->row_col])
-		{
-			returner[5] = 0;
-			continue;
-		}
-		if(7 == cols->sudoku_grid[i][cols->row_col])
-		{
-			returner[6] = 0;
-			continue;
-		}
-		if(8 == cols->sudoku_grid[i][cols->row_col])
-		{
-			returner[7] = 0;
-			continue;
-		}
-		if(9 == cols->sudoku_grid[i][cols->row_col])
-		{
-			returner[8] = 0;
-			continue;
+		for (int j = 1; j < 10; ++j){
+			if (j == cols->sudoku_grid[i][cols->row_col]){
+				returner[j-1] = 0;
+				break;
+			}
 		}
 	}
-
 
 	for (int i = 0; i < 9; ++i)
 	{
@@ -177,50 +137,11 @@ void* check_row(void* stuff_from_pthread_create)
 	rows->pass = 1;
 	for (int i = 0; i < 9; ++i)
 	{
-		if(1 == rows->sudoku_grid[rows->row_col][i])
-		{
-			returner[0] = 0;
-			continue;
-		}
-		if(2 == rows->sudoku_grid[rows->row_col][i])
-		{
-			returner[1] = 0;
-			continue;
-		}
-		if(3 == rows->sudoku_grid[rows->row_col][i])
-		{
-			returner[2] = 0;
-			continue;
-		}
-		if(4 == rows->sudoku_grid[rows->row_col][i])
-		{
-			returner[3] = 0;
-			continue;
-		}
-		if(5 == rows->sudoku_grid[rows->row_col][i])
-		{
-			returner[4] = 0;
-			continue;
-		}
-		if(6 == rows->sudoku_grid[rows->row_col][i])
-		{
-			returner[5] = 0;
-			continue;
-		}
-		if(7 == rows->sudoku_grid[rows->row_col][i])
-		{
-			returner[6] = 0;
-			continue;
-		}
-		if(8 == rows->sudoku_grid[rows->row_col][i])
-		{
-			returner[7] = 0;
-			continue;
-		}
-		if(9 == rows->sudoku_grid[rows->row_col][i])
-		{
-			returner[8] = 0;
-			continue;
+		for (int j = 1; j < 10; ++j){
+			if (j == rows->sudoku_grid[rows->row_col][i]){
+				returner[j - 1] = 0;
+				break;
+			}
 		}
 	}
 
@@ -240,7 +161,6 @@ void* check_row(void* stuff_from_pthread_create)
 void* check_grid(void* stuff_from_pthread_create)
 {
 
-
 	GridStuct* subgrids = stuff_from_pthread_create;
 
 
@@ -252,41 +172,11 @@ void* check_grid(void* stuff_from_pthread_create)
 	{
 		for (int j = subgrids->col_low_bound; j <= subgrids->col_high_bound; ++j)
 		{
-			if (1 == subgrids->sudoku_grid[i][j])
-			{
-				returner[0] = 0;
-			}
-			if (2 == subgrids->sudoku_grid[i][j])
-			{
-				returner[1] = 0;
-			}
-			if (3 == subgrids->sudoku_grid[i][j])
-			{
-				returner[2] = 0;
-			}
-			if (4 == subgrids->sudoku_grid[i][j])
-			{
-				returner[3] = 0;
-			}
-			if (5 == subgrids->sudoku_grid[i][j])
-			{
-				returner[4] = 0;
-			}
-			if (6 == subgrids->sudoku_grid[i][j])
-			{
-				returner[5] = 0;
-			}
-			if (7 == subgrids->sudoku_grid[i][j])
-			{
-				returner[6] = 0;
-			}
-			if (8 == subgrids->sudoku_grid[i][j])
-			{
-				returner[7] = 0;
-			}
-			if (9 == subgrids->sudoku_grid[i][j])
-			{
-				returner[8] = 0;
+			for(int k = 1; k < 10; ++k){
+				if( k == subgrids->sudoku_grid[i][j]){
+					returner[ k - 1] = 0;
+					break;
+				}
 			}
 		}
 	}
