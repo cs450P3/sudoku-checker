@@ -59,7 +59,7 @@ bool check_col(int sudoku_grid[9][9], int column){
 		if(9 == sudoku_grid[i][column]){
 			returner[8] = 0;
 			continue;
-		}	
+		}
 	}
 	for (int i = 0; i < 9; ++i){
 		if(returner[i] != 0){
@@ -125,22 +125,23 @@ bool check_row(int sudoku_grid[9][9], int row){
 	result = true;
 	return result;
 }
-typedef struct 
+typedef struct
 	{
 		int sudoku_grid[9][9];
 		int row_low_bound;
 		int row_high_bound;
 		int col_low_bound;
 		int col_high_bound;
+		int pass;
 
 	} GridStuct;
 void* check_grid(void* stuff_from_pthread_create){
-	
+
 
 	GridStuct* subgrids = stuff_from_pthread_create;
 	/*
-	int sudoku_grid[9][9], 
-	int row_low_bound, 
+	int sudoku_grid[9][9],
+	int row_low_bound,
 	int row_high_bound,
 	int col_low_bound,
 	int col_high_bound
@@ -149,7 +150,7 @@ void* check_grid(void* stuff_from_pthread_create){
 	bool result = malloc(sizeof(bool));
 	int returner[9] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
 
-	printf("%d\n", (GridStuct*) stuff_from_pthread_create->row_low_bound);
+	//printf("%d\n", (GridStuct*) stuff_from_pthread_create->row_low_bound);
 
 	for (int i = subgrids->row_low_bound; i <= subgrids->row_high_bound; ++i)
 	{
@@ -188,24 +189,41 @@ void* check_grid(void* stuff_from_pthread_create){
 	for (int i = 0; i < 9; ++i)
 	{
 		if (returner[i] != 0){
-			result = false;
+			//result = false;
+			subgrids->pass = 1;
 			printf("False!");
 			//return result;
 		}
 	}
-	result = true;
+	//result = true;
+	subgrids->pass = 1;
 	printf("True!");
 	//return result;
-	
+
 }
 
 
+typedef struct
+{
+	int *sudoku_grid[9][9];
+	int row_col;
+	int pass;
+
+} RowColStuct;
 
 int main()
 {
 	/*
 	bool cols_result = check_col(sudoku_grid, 0);
 	bool rows_result = check_row(sudoku_grid, 2);
+	0, 3, 6
+	2, 5, 8
+
+
+	for(int i = 0; i < 3; i++)
+	{
+	
+}
 	bool grids_result = check_grid(sudoku_grid, 0, 2, 6, 8);
 	printf("%d\n", cols_result);
 	printf("%d\n", rows_result);
@@ -215,14 +233,15 @@ int main()
 	pthread_t row_threads[9];
 	pthread_t col_threads[9];
 
-	
 
-	typedef struct 
+
+	typedef struct
 	{
 		int *sudoku_grid[9][9];
 		int row_col;
+		int pass;
 
-	} RowColStuct;	
+	} RowColStuct;
 
 
 	// Checking the grids
@@ -233,18 +252,55 @@ int main()
 	subgrids->col_low_bound = 6;
 	subgrids->col_high_bound = 8;
 
-	for (int i = 0; i < 9; ++i)
+	for(int k = 0; k < 9; k++)
 	{
-		for (int j = 0; j < 9; ++j)
+		for (int i = 0; i < 9; ++i)
 		{
-			subgrids->sudoku_grid[i][j] = sudoku_grid[i][j];
+			for (int j = 0; j < 9; ++j)
+			{
+				subgrids[k].sudoku_grid[i][j] = sudoku_grid[i][j];
+			}
 		}
 	}
 
-	for (int i = 0; i < 9; ++i)
+
+	/*
+	int num_args = argc - 1;
+
+	// thread id:
+	pthread_t tids[num_args];
+	sum_runner_struct args[num_args];
+
+	for(int i = 0; i < num_args; i++)
 	{
-		pthread_create(&grid_threads[i], NULL, &check_grid, &subgrids);
+
+		args[i].limit = atoll(argv[i + 1]);
+
+		// create attribures
+		pthread_attr_t attr;
+		pthread_attr_init(&attr);
+		pthread_create(&tids[i], &attr, sum_runner, &args[i]);
+
 	}
 
+	for(int i = 0; i < num_args; i++)
+	{
+		pthread_join(tids[i], NULL);
+		printf("Sum is %lld\n", args[i].answer);
+
+	}
+	*/
+	for (int i = 0; i < 9; ++i)
+	{
+		pthread_create(&grid_threads[i], NULL, &check_grid, &subgrids[0]);
+	}
+
+	for(int i = 0; i < 9; i++)
+	{
+		pthread_join(grid_threads[i], NULL);
+
+		printf("Sum is %d\n", subgrids[0].pass);
+
+	}
 	return 0;
 }
