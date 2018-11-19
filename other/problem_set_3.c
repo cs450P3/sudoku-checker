@@ -181,10 +181,11 @@ typedef struct {
 	int** _cols;
 		*/
 	int** _rows;
-	int * row_col_or_sub_grid;
+	//int * row_col_or_sub_grid;
 	int array_kind;
-	int array_number;
-	int * sudoku_check_grid;
+	int passes;
+	//int array_number;
+	//int * sudoku_check_grid;
 	// each threads reads a subgrid, col, or row
 	// each thread writes to rows, columns, subgrids
 	// loop through each subgrid and map the ith subgrid to the ith subgrid checking function
@@ -395,10 +396,10 @@ int main()
 		cols[i] = col;
 		//printf("---------\n");
 	}
-	
-	InfoToPassToChildThread* master_struct = malloc(sizeof(InfoToPassToChildThread));
 
-	master_struct->_rows = malloc(sizeof(int*) * 9);
+	InfoToPassToChildThread* master_struct = malloc(sizeof(InfoToPassToChildThread)*9);
+
+	master_struct[0]->_rows = malloc(sizeof(int*) * 9);
 	//memset(master_struct->_rows, 0, sizeof(int*) * 9);
 	//printf("rows\n");
 	for(int i = 0; i < 9; i++)
@@ -415,31 +416,58 @@ int main()
 			//row[i] = i + (j * 9);
 			//printf("%i\n", i + (j * 9));
 		}
-		master_struct->_rows[i] = row;
+		master_struct[0]->_rows[i] = row;
 		//printf("--------\n");
 	}
 
 	//exit(1);
 
-	master_struct->array_kind = subgrid_;
+	master_struct[0]->array_kind = subgrid_;
 
 	//master_struct->sudoku_check_grid = malloc(sizeof(sudoku_check_grid));
 	//memcpy(master_struct->sudoku_check_grid, sudoku_check_grid, sizeof(sudoku_check_grid));
 
 	//master_struct->_rows = malloc(9);
 
+	/*
+	int num_args = argc - 1;
+
+	// thread id:
+	pthread_t tids[num_args];
+	sum_runner_struct args[num_args];
+
+	for(int i = 0; i < num_args; i++)
+	{
+
+		args[i].limit = atoll(argv[i + 1]);
+
+		// create attribures
+		pthread_attr_t attr;
+		pthread_attr_init(&attr);
+		pthread_create(&tids[i], &attr, sum_runner, &args[i]);
+
+	}
+
+	for(int i = 0; i < num_args; i++)
+	{
+		pthread_join(tids[i], NULL);
+		printf("Sum is %lld\n", args[i].answer);
+
+	}
+	*/
+
 
 	pthread_t subgrid_thread[9];
 	pthread_t row_thread;
 	pthread_t col_thread;
 
-	int passes = 0;
+	//int passes = 0;
 	printf("checking subgrids\n");
 	/*
 	InfoToPassToChildThread* master_struct = malloc(sizeof(InfoToPassToChildThread));
 	master_struct->_rows = malloc(9);
 	*/
-			bool *result;
+	//		bool *result;
 
 	for(int i = 0; i < 9; i++)
 	{
@@ -450,7 +478,7 @@ int main()
 		//master_struct->row_col_or_sub_grid = malloc(sizeof(int)*9);
 		//printf("foo1\n");
 		//memcpy(master_struct->row_col_or_sub_grid, subgrids[i], sizeof(int)*9);
-		
+
 
 		master_struct->array_number = i;
 		//printf("foo2\n");
@@ -466,7 +494,11 @@ int main()
 		printf("%i\n", (int) *result);
 
 	}
-	
+	for(int i = 0 ; i < 9; i++)
+	{
+		pthread_join(subgrid_thread[i],NULL);
+
+	}
 	exit(1);
 	/*
 	printf("\nchecking rows\n");

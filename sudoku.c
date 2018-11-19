@@ -3,7 +3,15 @@
 #include <stdbool.h>
 #include <string.h>
 #include <pthread.h>
+/*
 
+This program finds out if a sudoku board is valid.  If it is invalid an error message for each row, col, and 3x3 subgrid that doesn't have all required digits.
+
+Memebers of team:
+David Tauraso
+Joeseph Criseno
+
+*/
 enum quadrants_rows_cols{top_left,
 						top_middle,
 						top_right,
@@ -309,30 +317,65 @@ int main(int argc, char** argv)
 
 
 	int** grid = malloc(sizeof(int*) * 9);
-	FILE* file_ptr;
-	if((file_ptr = fopen(argv[1], "r")) == NULL)
-	{
-		printf("can't find file\n");
-		exit(1);
-	}
+
 	for(int j = 0; j < 9; j++)
 	{
 		int* row_of_grid = malloc(sizeof(int) * 9);
 
 		for(int i = 0; i < 9; i++)
 		{
-			fscanf(file_ptr, "%i", &row_of_grid[i]);
+			fscanf(stdin, "%i", &row_of_grid[i]);
 		}
 		grid[j] = row_of_grid;
 	}
-	if(fclose(file_ptr) != 0)
-	{
-		printf("can't close the file\n");
-		exit(1);
-	}
+
 	int row_passes = 0;
 	int col_passes = 0;
 	int subgrid_passes = 0;
+
+
+	pthread_t row_threads[9];
+
+	RowColStuct* rows = malloc(sizeof(RowColStuct) * 9);
+	for(int k = 0; k < 9; k++)
+	{
+		for (int i = 0; i < 9; ++i)
+		{
+			for (int j = 0; j < 9; ++j)
+			{
+				rows[k].sudoku_grid[i][j] = grid[i][j];
+			}
+		}
+		rows[k].pass = 0;
+		rows[k].row_col = k;
+	}
+	for (int i = 0; i < 9; ++i)
+	{
+		pthread_create(&row_threads[i], NULL, &check_row, &rows[i]);
+	}
+
+
+
+
+	pthread_t col_threads[9];
+	RowColStuct* cols = malloc(sizeof(RowColStuct) * 9);
+	for(int k = 0; k < 9; k++)
+	{
+		for (int i = 0; i < 9; ++i)
+		{
+			for (int j = 0; j < 9; ++j)
+			{
+				cols[k].sudoku_grid[i][j] = grid[i][j];
+			}
+		}
+		cols[k].pass = 0;
+		cols[k].row_col = k;
+	}
+	for (int i = 0; i < 9; ++i)
+	{
+		pthread_create(&col_threads[i], NULL, &check_col, &cols[i]);
+	}
+
 	pthread_t grid_threads[9];
 
 
@@ -369,45 +412,12 @@ int main(int argc, char** argv)
 	{
 		pthread_create(&grid_threads[i], NULL, &check_grid, &subgrids[i]);
 	}
-
-	for(int i = 0; i < 9; i++)
-	{
-		pthread_join(grid_threads[i], NULL);
-		if(!subgrids[i].pass)
-		{
-			printf("%s is not valid\n", getQuadrantName(i));
-		}
-		else
-		{
-			subgrid_passes++;
-		}
-
-	}
-	pthread_t row_threads[9];
-
-	RowColStuct* rows = malloc(sizeof(RowColStuct) * 9);
-	for(int k = 0; k < 9; k++)
-	{
-		for (int i = 0; i < 9; ++i)
-		{
-			for (int j = 0; j < 9; ++j)
-			{
-				rows[k].sudoku_grid[i][j] = grid[i][j];
-			}
-		}
-		rows[k].pass = 0;
-		rows[k].row_col = k;
-	}
-	for (int i = 0; i < 9; ++i)
-	{
-		pthread_create(&row_threads[i], NULL, &check_row, &rows[i]);
-	}
 	for(int i = 0; i < 9; i++)
 	{
 		pthread_join(row_threads[i], NULL);
 		if(!rows[i].pass)
 		{
-			printf("row %i is not valid\n", i);
+			printf("Row %i doesn't have the required values.\n", i);
 		}
 		else
 		{
@@ -415,33 +425,12 @@ int main(int argc, char** argv)
 		}
 
 	}
-
-
-
-	pthread_t col_threads[9];
-	RowColStuct* cols = malloc(sizeof(RowColStuct) * 9);
-	for(int k = 0; k < 9; k++)
-	{
-		for (int i = 0; i < 9; ++i)
-		{
-			for (int j = 0; j < 9; ++j)
-			{
-				cols[k].sudoku_grid[i][j] = grid[i][j];
-			}
-		}
-		cols[k].pass = 0;
-		cols[k].row_col = k;
-	}
-	for (int i = 0; i < 9; ++i)
-	{
-		pthread_create(&col_threads[i], NULL, &check_col, &cols[i]);
-	}
 	for(int i = 0; i < 9; i++)
 	{
 		pthread_join(col_threads[i], NULL);
 		if(!cols[i].pass)
 		{
-			printf("column %i is not valid\n", i);
+			printf("Column %i doesn't have the required values.\n", i);
 		}
 		else
 		{
@@ -449,13 +438,27 @@ int main(int argc, char** argv)
 		}
 
 	}
+	for(int i = 0; i < 9; i++)
+	{
+		pthread_join(grid_threads[i], NULL);
+		if(!subgrids[i].pass)
+		{
+			printf("The %s doesn't have the required values.\n", getQuadrantName(i));
+		}
+		else
+		{
+			subgrid_passes++;
+		}
+
+	}
+
 	if((col_passes + row_passes + subgrid_passes) == 27)
 	{
-		printf("sudoku grid is valid\n");
+		printf("The input is a valid Sudoku.\n");
 	}
 	else
 	{
-		printf("sudoku grid is invalid\n");
+		printf("The input is not a valid Sudoku.\n");
 	}
 	// free all these
 	//int** grid
