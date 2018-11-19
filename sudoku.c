@@ -4,19 +4,91 @@
 #include <string.h>
 #include <pthread.h>
 
+enum quadrants_rows_cols{top_left,
+						top_middle,
+						top_right,
+						middle_left,
+						middle_middle, middle_right,
+						bottom_left,
+						bottom_middle,
+						bottom_right};
+
+char* getQuadrantName(int quadrant)
+{
+	char* quadrant_name = malloc(sizeof(char) * 20);
+
+	switch(quadrant)
+	{
+		case top_left:
+		{
+			memcpy(quadrant_name, "top_left", sizeof(char) * 9);
+			break;
+		}
+		case top_middle:
+		{
+			memcpy(quadrant_name, "top_middle", sizeof(char) * 11);
+			break;
+		}
+
+		case top_right:
+		{
+			memcpy(quadrant_name, "top_right", sizeof(char) * 10);
+			break;
+		}
+		case middle_left:
+		{
+			memcpy(quadrant_name, "middle_left", sizeof(char) * 12);
+			break;
+		}
+		case middle_middle:
+		{
+			memcpy(quadrant_name, "middle_middle", sizeof(char) * 14);
+			break;
+		}
+		case middle_right:
+		{
+			memcpy(quadrant_name, "middle_right", sizeof(char) * 13);
+
+			break;
+		}
+		case bottom_left:
+		{
+			memcpy(quadrant_name, "bottom_left", sizeof(char) * 12);
+
+			break;
+		}
+		case bottom_middle:
+		{
+			memcpy(quadrant_name, "bottom_middle", sizeof(char) * 14);
+
+			break;
+		}
+		case bottom_right:
+		{
+			memcpy(quadrant_name, "bottom_right", sizeof(char) * 13);
+			break;
+
+		}
+		default:
+		{
+			break;
+		}
+	}
+	return quadrant_name;
+}
 
 int sudoku_grid[9][9] = {
-	{	7, 2, 6,    3, 5, 9,    4, 1, 8	},
+	{	7, /*2*/4, 6,    3, 5, 9,    4, 1, 8	},
 	{	4, 5, 8,    1, 6, 7,    2, 3, 9	},
 	{	9, 1, 3,    8, 2, 4,    7, 6, 5	},
 
 	{	1, 6, 2,    9, 7, 5,    3, 8, 4	},
-	{	3, 9, 4,    2, 8, 6,    1, 5, 7	},
+	{	3, 9, 4,    2, /*8*/4, 6,    1, 5, 7	},
 	{	8, 7, 5,    4, 1, 3,    9, 2, 6	},
 
 	{	5, 3, 7,    6, 4, 1,    8, 9, 2	},
 	{	6, 8, 9,    7, 3, 2,    5, 4, 1	},
-	{	2, 4, 1,    5, 9, 8,    6, 7, 3	}
+	{	2, 4, 1,    5, 9, 8,    6, /*7*/4, 3	}
 };
 
 /*
@@ -212,7 +284,7 @@ void* check_grid(void* stuff_from_pthread_create){
 		}
 	}
 
-	if(subgrids->pass)
+	/*if(subgrids->pass)
 	{
 		//subgrids->pass = 1;
 		printf("True!\n");
@@ -221,11 +293,11 @@ void* check_grid(void* stuff_from_pthread_create){
 	else
 	{
 		printf("False!\n");
-	}
+	}*/
 	//result = true;
 
 	//return result;
-
+	pthread_exit(0);
 }
 
 
@@ -350,8 +422,11 @@ int main()
 	for(int i = 0; i < 9; i++)
 	{
 		pthread_join(grid_threads[i], NULL);
-
-		printf("resuld is %d\n", subgrids[i].pass);
+		if(!subgrids[i].pass)
+		{
+			printf("%s is not valid\n", getQuadrantName(i));
+		}
+		//printf("resuld is %d\n", subgrids[i].pass);
 
 	}
 	return 0;
